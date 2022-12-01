@@ -1,0 +1,17 @@
+{
+    "name": "maced0/chat",
+    "description": "Chat for internal system conversation.",
+    "autoload": {
+        "psr-4": {
+            "Maced0\\Chat\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Mauricio Macedo",
+            "email": "mauriciomacedo7015@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
