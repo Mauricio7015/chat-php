@@ -1,5 +1,5 @@
 {
-    "name": "chatPhp/chat",
+    "name": "chat-php/chat",
     "description": "Chat for internal system conversation.",
     "autoload": {
         "psr-4": {
