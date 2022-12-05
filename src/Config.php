@@ -9,9 +9,11 @@ class Config {
     private $password;
     private $database;
     private $userTable;
+    private $userTableNameColumn;
 
-    public function set(array $data, string $userTable = 'users')
+    public function __construct(string $path = 'config.php')
     {
+        $data = require $path;
         if (!empty($data['host']))
             $this->host = $data['host'];
 
@@ -24,7 +26,11 @@ class Config {
         if (!empty($data['database']))
             $this->database = $data['database'];
 
-        $this->userTable = $userTable;
+        if (!empty($data['user_table']))
+            $this->userTable = $data['user_table'];
+
+        if (!empty($data['user_table_name_column']))
+            $this->userTableNameColumn = $data['user_table_name_column'];
     }
 
     public function getConnectionDB() {
@@ -42,5 +48,9 @@ class Config {
 
     public function getUserTable() {
         return $this->userTable;
+    }
+
+    public function getUserTableNameColumn() {
+        return $this->userTableNameColumn;
     }
 }

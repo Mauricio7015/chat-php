@@ -190,12 +190,17 @@
         clear: both;
         height: 0;
     }
+    .d-none {
+        display: none;
+    }
 </style>
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/3.0.0/handlebars.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/list.js/1.1.1/list.min.js"></script>
+
+<input type="hidden" id="meId" value="<?php echo $currentUserId ?>">
 
 <div class="container clearfix">
     <div class="people-list" id="people-list">
@@ -207,7 +212,7 @@
         <?php 
             foreach ($users as $user) {
         ?>
-            <li class="clearfix" onclick="openChat(<?php echo $user['id'] ?>)">
+            <li class="clearfix" onclick="openChat(<?php echo $user['id'] ?>, '<?php echo $user['name'] ?>', <?php echo $currentUserId ?>)">
                 <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/195612/chat_avatar_01.jpg" alt="avatar" />
                 <div class="about">
                     <div class="name"><?php echo $user['name'] ?></div>
@@ -223,81 +228,26 @@
     </div>
     
     <div class="chat">
-      <div class="chat-header clearfix">
-        <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/195612/chat_avatar_01_green.jpg" alt="avatar" />
-        
-        <div class="chat-about">
-          <div class="chat-with">Chat with Vincent Porter</div>
-          <div class="chat-num-messages">already 1 902 messages</div>
+        <div id="chat_active_header">
+            
         </div>
-        <i class="fa fa-star"></i>
-      </div> <!-- end chat-header -->
       
       <div class="chat-history">
         <ul>
-          <li class="clearfix">
-            <div class="message-data align-right">
-              <span class="message-data-time" >10:10 AM, Today</span> &nbsp; &nbsp;
-              <span class="message-data-name" >Olia</span> <i class="fa fa-circle me"></i>
-              
-            </div>
-            <div class="message other-message float-right">
-              Hi Vincent, how are you? How is the project coming along?
-            </div>
-          </li>
           
-          <li>
-            <div class="message-data">
-              <span class="message-data-name"><i class="fa fa-circle online"></i> Vincent</span>
-              <span class="message-data-time">10:12 AM, Today</span>
-            </div>
-            <div class="message my-message">
-              Are we meeting today? Project has been already finished and I have results to show you.
-            </div>
-          </li>
-          
-          <li class="clearfix">
-            <div class="message-data align-right">
-              <span class="message-data-time" >10:14 AM, Today</span> &nbsp; &nbsp;
-              <span class="message-data-name" >Olia</span> <i class="fa fa-circle me"></i>
-              
-            </div>
-            <div class="message other-message float-right">
-              Well I am not sure. The rest of the team is not here yet. Maybe in an hour or so? Have you faced any problems at the last phase of the project?
-            </div>
-          </li>
-          
-          <li>
-            <div class="message-data">
-              <span class="message-data-name"><i class="fa fa-circle online"></i> Vincent</span>
-              <span class="message-data-time">10:20 AM, Today</span>
-            </div>
-            <div class="message my-message">
-              Actually everything was fine. I'm very excited to show this to our team.
-            </div>
-          </li>
-          
-          <li>
-            <div class="message-data">
-              <span class="message-data-name"><i class="fa fa-circle online"></i> Vincent</span>
-              <span class="message-data-time">10:31 AM, Today</span>
-            </div>
-            <i class="fa fa-circle online"></i>
-            <i class="fa fa-circle online" style="color: #AED2A6"></i>
-            <i class="fa fa-circle online" style="color:#DAE9DA"></i>
-          </li>
           
         </ul>
         
       </div> <!-- end chat-history -->
       
-      <div class="chat-message clearfix">
+      <div class="chat-message clearfix d-none">
         <textarea name="message-to-send" id="message-to-send" placeholder ="Type your message" rows="3"></textarea>
+        <input type="hidden" id="receiverId">
                 
         <i class="fa fa-file-o"></i> &nbsp;&nbsp;&nbsp;
         <i class="fa fa-file-image-o"></i>
         
-        <button>Send</button>
+        <button onclick="sendMessage()">Send</button>
 
       </div> <!-- end chat-message -->
       
@@ -331,104 +281,116 @@
 
 <script>
     (function(){
-  
-  var chat = {
-    messageToSend: '',
-    messageResponses: [
-      'Why did the web developer leave the restaurant? Because of the table layout.',
-      'How do you comfort a JavaScript bug? You console it.',
-      'An SQL query enters a bar, approaches two tables and asks: "May I join you?"',
-      'What is the most used language in programming? Profanity.',
-      'What is the object-oriented way to become wealthy? Inheritance.',
-      'An SEO expert walks into a bar, bars, pub, tavern, public house, Irish pub, drinks, beer, alcohol'
-    ],
-    init: function() {
-      this.cacheDOM();
-      this.bindEvents();
-      this.render();
-    },
-    cacheDOM: function() {
-      this.$chatHistory = $('.chat-history');
-      this.$button = $('button');
-      this.$textarea = $('#message-to-send');
-      this.$chatHistoryList =  this.$chatHistory.find('ul');
-    },
-    bindEvents: function() {
-      this.$button.on('click', this.addMessage.bind(this));
-      this.$textarea.on('keyup', this.addMessageEnter.bind(this));
-    },
-    render: function() {
-      this.scrollToBottom();
-      if (this.messageToSend.trim() !== '') {
-        var template = Handlebars.compile( $("#message-template").html());
-        var context = { 
-          messageOutput: this.messageToSend,
-          time: this.getCurrentTime()
-        };
-
-        this.$chatHistoryList.append(template(context));
-        this.scrollToBottom();
-        this.$textarea.val('');
-        
-        // responses
-        var templateResponse = Handlebars.compile( $("#message-response-template").html());
-        var contextResponse = { 
-          response: this.getRandomItem(this.messageResponses),
-          time: this.getCurrentTime()
-        };
-        
-        setTimeout(function() {
-          this.$chatHistoryList.append(templateResponse(contextResponse));
-          this.scrollToBottom();
-        }.bind(this), 1500);
-        
-      }
-      
-    },
     
-    addMessage: function() {
-      this.messageToSend = this.$textarea.val()
-      this.render();         
-    },
-    addMessageEnter: function(event) {
-        // enter was pressed
-        if (event.keyCode === 13) {
-          this.addMessage();
+    var searchFilter = {
+        options: { valueNames: ['name'] },
+        init: function() {
+        var userList = new List('people-list', this.options);
+        var noItems = $('<li id="no-items-found">No items found</li>');
+        
+        userList.on('updated', function(list) {
+            if (list.matchingItems.length === 0) {
+            $(list.list).append(noItems);
+            } else {
+            noItems.detach();
+            }
+        });
         }
-    },
-    scrollToBottom: function() {
-       this.$chatHistory.scrollTop(this.$chatHistory[0].scrollHeight);
-    },
-    getCurrentTime: function() {
-      return new Date().toLocaleTimeString().
-              replace(/([\d]+:[\d]{2})(:[\d]{2})(.*)/, "$1$3");
-    },
-    getRandomItem: function(arr) {
-      return arr[Math.floor(Math.random()*arr.length)];
-    }
+    };
     
-  };
-  
-  chat.init();
-  
-  var searchFilter = {
-    options: { valueNames: ['name'] },
-    init: function() {
-      var userList = new List('people-list', this.options);
-      var noItems = $('<li id="no-items-found">No items found</li>');
-      
-      userList.on('updated', function(list) {
-        if (list.matchingItems.length === 0) {
-          $(list.list).append(noItems);
-        } else {
-          noItems.detach();
-        }
-      });
-    }
-  };
-  
-  searchFilter.init();
+    searchFilter.init();
   
 })();
+
+var socket  = new WebSocket('ws://localhost:8080');
+setTimeout(() => {
+    socket.send('{"user_id": "<?php echo $currentUserId ?>"}');
+}, 1000);
+
+function transmitMessage() {
+    socket.send( message.value );
+}
+
+socket.onmessage = function(e) {
+    const res = JSON.parse(e.data);
+    if (res.type == 'new_message') {
+        newMessage(res);
+    }
+}
+
+function newMessage(res) {
+    var messagens = '<li>\
+            <div class="message-data">\
+              <span class="message-data-name"><i class="fa fa-circle"></i> '+res.name+'</span>\
+              <span class="message-data-time">'+res.created_at+'</span>\
+            </div>\
+            <div class="message my-message">\
+              '+res.message+'\
+            </div>\
+          </li>';
+
+    $('.chat-history ul').append(messagens);
+}
+
+function sendMessage() {
+    var receiverId = $('#receiverId').val();
+    var message = $('#message-to-send').val();
+    var meId = $('#meId').val();
+
+    socket.send('{"receiverId": '+receiverId+', "meId": '+meId+', "message":"'+message+'", "type": "sendMessage"}');
+
+    let date = new Date().toLocaleDateString();
+
+    var messagens = '<li>\
+            <div class="message-data align-right">\
+              <span class="message-data-name"><i class="fa fa-circle"></i> Eu</span>\
+              <span class="message-data-time">'+date+'</span>\
+            </div>\
+            <div class="message other-message float-right">\
+              '+message+'\
+            </div>\
+          </li>';
+
+    $('.chat-history ul').append(messagens);
+}
+
+function openChat(receiverId, receiverName, meId) {
+    socket.send('{"receiverId": '+receiverId+', "meId":'+meId+', "type": "allMessages"}');
+    $('#receiverId').val(receiverId);
+    $('#message-to-send').val('');
+    $('.chat-message').removeClass('d-none');
+
+    var htmlHeader = '<div class="chat-header clearfix">\
+                <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/195612/chat_avatar_01_green.jpg" alt="avatar" />\
+                <div class="chat-about">\
+                <div class="chat-with">'+receiverName+'</div>\
+                </div>\
+                <i class="fa fa-star"></i>\
+            </div>';
+
+    $('#chat_active_header').append(htmlHeader);
+
+    var messagens = '<li class="clearfix">\
+            <div class="message-data align-right">\
+              <span class="message-data-time" >10:10 AM, Today</span> &nbsp; &nbsp;\
+              <span class="message-data-name" >Olia</span> <i class="fa fa-circle me"></i>\
+            </div>\
+            <div class="message other-message float-right">\
+              Hi Vincent, how are you? How is the project coming along?\
+            </div>\
+          </li>\
+          <li>\
+            <div class="message-data">\
+              <span class="message-data-name"><i class="fa fa-circle online"></i> Vincent</span>\
+              <span class="message-data-time">10:12 AM, Today</span>\
+            </div>\
+            <div class="message my-message">\
+              Are we meeting today? Project has been already finished and I have results to show you.\
+            </div>\
+          </li>';
+
+    // $('.chat-history ul').append(messagens);
+
+} 
 
 </script>
