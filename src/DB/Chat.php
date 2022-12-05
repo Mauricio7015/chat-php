@@ -9,6 +9,7 @@ class Chat {
 
     private $config;
     private $conn;
+    private $chat;
 
     public function __construct(Config $config)
     {
@@ -34,11 +35,13 @@ class Chat {
                 if (!$result)
                     return false;
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+                $this->chat = $rows[0];
                 return $rows[0];
             }
     
             return false;
         }
+        $this->chat = $rows[0];
         return $rows[0];
     }
 
@@ -74,5 +77,32 @@ class Chat {
             return $rows[0];
         }
         return false;
+    }
+
+    public function getMessages() {
+        if (!$this->chat) {
+            return [];
+        }
+
+        $user_table             = $this->config->getUserTable();
+        $user_table_name_column = $this->config->getUserTableNameColumn();
+
+        $query = "SELECT 
+            messages.message,
+            DATE_FORMAT(messages.created_at, '%d/%m/%Y %H:%i') as created_at,
+            sender.id as sender_id,
+            sender.$user_table_name_column as name,
+            messages.receiver_id
+            FROM messages
+            INNER JOIN $user_table as sender ON (sender.id = messages.sender_id)
+            ORDER BY messages.id DESC
+            LIMIT 100";
+
+        $result = mysqli_query($this->conn, $query);
+        if (!$result)
+            return false;
+
+        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        return $rows;
     }
 }

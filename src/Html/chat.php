@@ -217,7 +217,7 @@
                 <div class="about">
                     <div class="name"><?php echo $user['name'] ?></div>
                     <div class="status">
-                    <i class="fa fa-circle online"></i> online
+                    <?php echo $user['office'] ?>
                     </div>
                 </div>
             </li>
@@ -241,13 +241,13 @@
       </div> <!-- end chat-history -->
       
       <div class="chat-message clearfix d-none">
-        <textarea name="message-to-send" id="message-to-send" placeholder ="Type your message" rows="3"></textarea>
+        <textarea name="message-to-send" id="message-to-send" placeholder ="Digite ..." rows="3"></textarea>
         <input type="hidden" id="receiverId">
                 
         <i class="fa fa-file-o"></i> &nbsp;&nbsp;&nbsp;
         <i class="fa fa-file-image-o"></i>
         
-        <button onclick="sendMessage()">Send</button>
+        <button onclick="sendMessage()">Enviar</button>
 
       </div> <!-- end chat-message -->
       
@@ -290,9 +290,9 @@
         
         userList.on('updated', function(list) {
             if (list.matchingItems.length === 0) {
-            $(list.list).append(noItems);
+                $(list.list).append(noItems);
             } else {
-            noItems.detach();
+                noItems.detach();
             }
         });
         }
@@ -316,6 +316,10 @@ socket.onmessage = function(e) {
     if (res.type == 'new_message') {
         newMessage(res);
     }
+
+    if (res.type == 'all_messages') {
+        loadMessages(res.messages)
+    }
 }
 
 function newMessage(res) {
@@ -330,6 +334,30 @@ function newMessage(res) {
           </li>';
 
     $('.chat-history ul').append(messagens);
+    $(".chat-history").animate({ scrollTop: $('.chat-history').height() });
+}
+
+function loadMessages(messages) {
+    var meId = $('#meId').val();
+    $('.chat-history ul').empty();
+    $.each(messages, function(index, value) {
+        if (meId == value.sender_id) {
+            var messagens = '<li>\
+                <div class="message-data align-right">\
+                <span class="message-data-name"><i class="fa fa-circle"></i> Eu</span>\
+                <span class="message-data-time">'+value.created_at+'</span>\
+                </div>\
+                <div class="message other-message float-right">\
+                '+value.message+'\
+                </div>\
+            </li>';
+
+            $('.chat-history ul').append(messagens);
+        } else {
+            newMessage(value);
+        }
+    });
+    $(".chat-history").animate({ scrollTop: $('.chat-history').height() });
 }
 
 function sendMessage() {
@@ -352,6 +380,9 @@ function sendMessage() {
           </li>';
 
     $('.chat-history ul').append(messagens);
+
+    $('#message-to-send').val('');
+    $(".chat-history").animate({ scrollTop: $('.chat-history').height() });
 }
 
 function openChat(receiverId, receiverName, meId) {
@@ -365,9 +396,9 @@ function openChat(receiverId, receiverName, meId) {
                 <div class="chat-about">\
                 <div class="chat-with">'+receiverName+'</div>\
                 </div>\
-                <i class="fa fa-star"></i>\
             </div>';
 
+    $('#chat_active_header').empty();
     $('#chat_active_header').append(htmlHeader);
 
     var messagens = '<li class="clearfix">\

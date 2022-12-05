@@ -43,12 +43,16 @@ class Socket implements MessageComponentInterface {
         if (!empty($message->receiverId) && !empty($message->meId) && !empty($message->type) && $message->type == 'allMessages') {
             //verificar se tem permissão de criar esse chat
             $chat = new Chat($this->config);
-            $chat = $chat->getOrCreate($message->meId, $message->receiverId);
-            // $from->send(json_encode($chat));
+            $chat->getOrCreate($message->meId, $message->receiverId);
+            $messages = $chat->getMessages();
+            $data = [
+                'type' => 'all_messages',
+                'messages' => $messages
+            ];
+            $from->send(json_encode($data));
         }
 
         if (!empty($message->receiverId) && !empty($message->meId) && !empty($message->message) && !empty($message->type) && $message->type == 'sendMessage') {
-            //enviar para o outro cliente a mensagem
             $chat = new Chat($this->config);
             $messageSend = $chat->sendMessage($message->meId, $message->receiverId, $message->message);
             if (is_array($messageSend)) {
