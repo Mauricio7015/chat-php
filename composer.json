@@ -12,7 +12,7 @@
             "email": "mauriciomacedo7015@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "require": {
         "cboden/ratchet": "^0.4.1"
     }
