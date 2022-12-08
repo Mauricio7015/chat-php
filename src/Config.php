@@ -10,10 +10,13 @@ class Config {
     private $database;
     private $userTable;
     private $userTableNameColumn;
+    private $pathAnexos;
+    private $downloadAnexos;
 
     public function __construct(string $path = 'config.php')
     {
         $data = require $path;
+
         if (!empty($data['host']))
             $this->host = $data['host'];
 
@@ -31,6 +34,12 @@ class Config {
 
         if (!empty($data['user_table_name_column']))
             $this->userTableNameColumn = $data['user_table_name_column'];
+
+        if (!empty($data['path_anexos']))
+            $this->pathAnexos = $data['path_anexos'];
+
+        if (!empty($data['download_anexos']))
+            $this->downloadAnexos = $data['download_anexos'];
     }
 
     public function getConnectionDB() {
@@ -52,5 +61,13 @@ class Config {
 
     public function getUserTableNameColumn() {
         return $this->userTableNameColumn;
+    }
+
+    public function getPathAnexos() {
+        return $this->pathAnexos;
+    }
+
+    public function getDownloadAnexos() {
+        return $this->downloadAnexos;
     }
 }

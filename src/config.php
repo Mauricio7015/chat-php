@@ -6,5 +6,7 @@ return [
     'password'=>'example',
     'database'=>'example',
     'user_table'=>'users',
-    'user_table_name_column'=>'name'
+    'user_table_name_column'=>'name',
+    'path_anexos'=>'/app/uploads',
+    'download_anexos'=>'app/uploads',
 ];

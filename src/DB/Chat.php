@@ -48,7 +48,7 @@ class Chat {
     public function sendMessage(int $userId, int $receiverId, string $message) {
         $chat = $this->getOrCreate($userId, $receiverId);
         $chatId = $chat['id'];
-        $date = now();
+        $date = date("Y-m-d H:i:s");
 
         $query = "insert into messages (chat_id, sender_id, receiver_id, message, created_at) VALUES ($chatId,$userId,$receiverId,'$message','$date')";
 
@@ -79,6 +79,40 @@ class Chat {
         return false;
     }
 
+    public function sendAnexo(int $userId, int $receiverId, string $path, string $anexoName) {
+        $chat = $this->getOrCreate($userId, $receiverId);
+        $chatId = $chat['id'];
+        $date = date("Y-m-d H:i:s");
+
+        $query = "insert into messages (chat_id, sender_id, receiver_id, anexo, anexo_name, created_at) VALUES ($chatId,$userId,$receiverId,'$path','$anexoName','$date')";
+
+        if ($this->conn->query($query) === TRUE) {
+            $user_table             = $this->config->getUserTable();
+            $user_table_name_column = $this->config->getUserTableNameColumn();
+            $query = "SELECT
+                    messages.*,
+                    $user_table.$user_table_name_column
+                FROM
+                    messages 
+                INNER JOIN $user_table on ($user_table.id = messages.sender_id)
+                WHERE
+                    chat_id = $chatId 
+                    AND sender_id = $userId 
+                    AND anexo = '$path'
+                    AND created_at = '$date'
+                ORDER BY
+                    messages.id DESC 
+                    LIMIT 1";
+
+            $result = mysqli_query($this->conn, $query);
+            if (!$result)
+                return false;
+            $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+            return $rows[0];
+        }
+        return false;
+    }
+
     public function getMessages() {
         if (!$this->chat) {
             return [];
@@ -86,16 +120,21 @@ class Chat {
 
         $user_table             = $this->config->getUserTable();
         $user_table_name_column = $this->config->getUserTableNameColumn();
+        $chatId = $this->chat['id'];
 
         $query = "SELECT 
+            messages.id,
             messages.message,
+            messages.anexo,
+            messages.anexo_name,
             DATE_FORMAT(messages.created_at, '%d/%m/%Y %H:%i') as created_at,
             sender.id as sender_id,
             sender.$user_table_name_column as name,
             messages.receiver_id
             FROM messages
             INNER JOIN $user_table as sender ON (sender.id = messages.sender_id)
-            ORDER BY messages.id DESC
+            WHERE messages.chat_id = $chatId
+            ORDER BY messages.id ASC
             LIMIT 100";
 
         $result = mysqli_query($this->conn, $query);
